@@ -1,0 +1,86 @@
+# SPDX-License-Identifier: Apache-2.0
+
+include(${CMAKE_SOURCE_DIR}/projects/arch/cm4f.cmake)
+
+set(src-dirs src)
+foreach(dir ${src-dirs})
+	file(GLOB_RECURSE ${dir}_SRCS RELATIVE ${CMAKE_SOURCE_DIR} ${dir}/*.c)
+	file(GLOB_RECURSE ${dir}_CPP_SRCS RELATIVE ${CMAKE_SOURCE_DIR} ${dir}/*.cpp)
+	list(APPEND SRCS_TMP ${${dir}_SRCS} ${${dir}_CPP_SRCS})
+endforeach()
+
+set(APP_SRCS ${SRCS_TMP})
+set(APP_INCS ${CMAKE_SOURCE_DIR}/include)
+set(APP_DEFS
+	${PROJECT}
+	BUILD_DATE=${BUILD_DATE}
+	VERSION_TAG=${VERSION_TAG}
+	VERSION=${VERSION}
+
+	_POSIX_THREADS
+	_POSIX_C_SOURCE=200809L
+)
+set(TARGET_PLATFORM stm32)
+set(PLATFORM_SPECIFIC ${CMAKE_SOURCE_DIR}/ports/stm32)
+set(LD_SCRIPT ${PLATFORM_SPECIFIC}/STM32G473CEUx_FLASH.ld)
+
+add_executable(${PROJECT_NAME} ${APP_SRCS})
+target_include_directories(${PROJECT_NAME} PRIVATE ${APP_INCS})
+target_compile_definitions(${PROJECT_NAME} PRIVATE ${APP_DEFS})
+target_link_options(${PROJECT_NAME} PRIVATE -T${LD_SCRIPT})
+target_link_libraries(${PROJECT_NAME} PRIVATE
+	-Wl,--cref
+	-Wl,--Map=\"${CMAKE_BINARY_DIR}/${PROJECT_NAME}.map\"
+
+	stm32
+)
+
+# Third Party
+add_subdirectory(external/libmcu)
+target_compile_definitions(libmcu PUBLIC
+	METRICS_USER_DEFINES=\"${PROJECT_SOURCE_DIR}/include/metrics.def\"
+	_POSIX_THREADS
+	_POSIX_C_SOURCE=200809L
+)
+target_include_directories(libmcu PUBLIC
+	${CMAKE_SOURCE_DIR}/external/libmcu/modules/common/include/libmcu/posix)
+
+# Platform Specific
+add_subdirectory(${PLATFORM_SPECIFIC})
+target_link_libraries(stm32 PUBLIC libmcu)
+
+add_custom_target(${PROJECT_NAME}.bin ALL DEPENDS ${PROJECT_NAME})
+add_custom_target(${PROJECT_NAME}.hex ALL DEPENDS ${PROJECT_NAME})
+add_custom_target(flash DEPENDS ${PROJECT_NAME}.bin)
+add_custom_target(flash_usb DEPENDS ${PROJECT_NAME}.bin)
+add_custom_target(gdb DEPENDS ${PROJECT_NAME})
+
+add_custom_command(TARGET ${PROJECT_NAME}.hex
+	COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${PROJECT_NAME}>
+			${PROJECT_NAME}.hex
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+add_custom_command(TARGET ${PROJECT_NAME}.bin
+	COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:${PROJECT_NAME}>
+			${PROJECT_NAME}.bin
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+add_custom_command(TARGET flash_usb
+	USES_TERMINAL COMMAND
+		dfu-util --alt 0 --dfuse-address 0x08000000 --download ${PROJECT_NAME}.bin
+)
+
+add_custom_command(TARGET flash
+	USES_TERMINAL
+	COMMAND
+		echo \"r\\nloadbin ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.bin, 0x08000000\\nr\\nq\" > ${PROJECT_NAME}.jlink
+	COMMAND
+		JLinkExe -if swd -device stm32g473ce -speed 4000 -CommanderScript ${PROJECT_NAME}.jlink
+)
+
+add_custom_command(TARGET gdb
+	USES_TERMINAL COMMAND
+		pyocd gdbserver -t stm32g473ce
+)
