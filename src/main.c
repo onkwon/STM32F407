@@ -12,6 +12,7 @@ static struct uart *uart2;
 static size_t logging_stdout_writer(const void *data, size_t size)
 {
 	unused(size);
+
 	static char buf[LOGGING_MESSAGE_MAXLEN];
 	size_t len = logging_stringify(buf, sizeof(buf)-1, data);
 
