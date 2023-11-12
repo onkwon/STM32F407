@@ -24,11 +24,12 @@ set(TARGET_PLATFORM stm32)
 set(PLATFORM_SPECIFIC ${CMAKE_SOURCE_DIR}/ports/stm32)
 set(LD_SCRIPT ${PLATFORM_SPECIFIC}/STM32G473CEUx_FLASH.ld)
 
-add_executable(${PROJECT_NAME} ${APP_SRCS})
-target_include_directories(${PROJECT_NAME} PRIVATE ${APP_INCS})
-target_compile_definitions(${PROJECT_NAME} PRIVATE ${APP_DEFS})
-target_link_options(${PROJECT_NAME} PRIVATE -T${LD_SCRIPT})
-target_link_libraries(${PROJECT_NAME} PRIVATE
+set(elf_file ${PROJECT_NAME}.elf)
+add_executable(${elf_file} ${APP_SRCS})
+target_include_directories(${elf_file} PRIVATE ${APP_INCS})
+target_compile_definitions(${elf_file} PRIVATE ${APP_DEFS})
+target_link_options(${elf_file} PRIVATE -T${LD_SCRIPT})
+target_link_libraries(${elf_file} PRIVATE
 	-Wl,--cref
 	-Wl,--Map=\"${CMAKE_BINARY_DIR}/${PROJECT_NAME}.map\"
 
@@ -49,20 +50,20 @@ target_include_directories(libmcu PUBLIC
 add_subdirectory(${PLATFORM_SPECIFIC})
 target_link_libraries(stm32 PUBLIC libmcu)
 
-add_custom_target(${PROJECT_NAME}.bin ALL DEPENDS ${PROJECT_NAME})
-add_custom_target(${PROJECT_NAME}.hex ALL DEPENDS ${PROJECT_NAME})
+add_custom_target(${PROJECT_NAME}.bin ALL DEPENDS ${elf_file})
+add_custom_target(${PROJECT_NAME}.hex ALL DEPENDS ${elf_file})
 add_custom_target(flash DEPENDS ${PROJECT_NAME}.bin)
 add_custom_target(flash_usb DEPENDS ${PROJECT_NAME}.bin)
-add_custom_target(gdb DEPENDS ${PROJECT_NAME})
+add_custom_target(gdb DEPENDS ${elf_file})
 
 add_custom_command(TARGET ${PROJECT_NAME}.hex
-	COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${PROJECT_NAME}>
+	COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${elf_file}>
 			${PROJECT_NAME}.hex
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 add_custom_command(TARGET ${PROJECT_NAME}.bin
-	COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:${PROJECT_NAME}>
+	COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:${elf_file}>
 			${PROJECT_NAME}.bin
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )

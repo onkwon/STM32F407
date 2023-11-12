@@ -8,6 +8,10 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+	set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/projects/arm-none-eabi-gcc.cmake)
+endif()
+
 project(template)
 
 enable_language(C CXX ASM)

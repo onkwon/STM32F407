@@ -41,9 +41,8 @@ jobs:
         continue-on-error: true
         run: |
           git checkout main $MEMSEG_BASE || cp $MEMSEG_BASE.template $MEMSEG_BASE
-          . $IDF_PATH/export.sh
           arm-none-eabi-size build/*.elf > $MEMSEG_BASE_TMP
-          echo -n "\`\`\`\n        " > $MEMSEG_RESULT
+          echo -en "\`\`\`\n        " > $MEMSEG_RESULT
           cat $MEMSEG_BASE_TMP | sed -n 1p >> $MEMSEG_RESULT
           echo -n "current " >> $MEMSEG_RESULT
           cat $MEMSEG_BASE_TMP | sed -n 2p >> $MEMSEG_RESULT
@@ -53,7 +52,7 @@ jobs:
           paste $MEMSEG_BASE $MEMSEG_BASE_TMP | \
             sed -n 2p | \
             awk '{printf "%7d %7d %7d", $7-$1, $8-$2, $9-$3}' >> $MEMSEG_RESULT
-          echo "\n\`\`\`" >> $MEMSEG_RESULT
+          echo -e "\n\`\`\`" >> $MEMSEG_RESULT
           cp $MEMSEG_BASE_TMP $MEMSEG_BASE
       - name: Comment Memory Size
         if: github.event_name == 'pull_request'
