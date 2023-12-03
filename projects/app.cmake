@@ -9,8 +9,15 @@ foreach(dir ${src-dirs})
 	list(APPEND SRCS_TMP ${${dir}_SRCS} ${${dir}_CPP_SRCS})
 endforeach()
 
-set(APP_SRCS ${SRCS_TMP})
-set(APP_INCS ${CMAKE_SOURCE_DIR}/include)
+set(APP_SRCS
+	${SRCS_TMP}
+	${CMAKE_SOURCE_DIR}/external/libmcu/ports/armcm/fault.c
+	${CMAKE_SOURCE_DIR}/external/libmcu/ports/armcm/assert.c
+)
+set(APP_INCS
+	${CMAKE_SOURCE_DIR}/include
+	${CMAKE_SOURCE_DIR}/external/libmcu/ports/armcm/include
+)
 set(APP_DEFS
 	${PROJECT}
 	BUILD_DATE=${BUILD_DATE}
@@ -24,6 +31,7 @@ set(TARGET_PLATFORM stm32)
 set(PLATFORM_SPECIFIC ${CMAKE_SOURCE_DIR}/ports/stm32)
 set(LD_SCRIPT ${PLATFORM_SPECIFIC}/STM32G473CEUx_FLASH.ld)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -include libmcu/assert.h")
 set(elf_file ${PROJECT_NAME}.elf)
 add_executable(${elf_file} ${APP_SRCS})
 target_include_directories(${elf_file} PRIVATE ${APP_INCS})

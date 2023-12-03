@@ -40,7 +40,8 @@ jobs:
       - name: Process Memory Usage
         continue-on-error: true
         run: |
-          git checkout main $MEMSEG_BASE || cp $MEMSEG_BASE.template $MEMSEG_BASE
+          git fetch
+          git checkout origin/main -- $MEMSEG_BASE || cp $MEMSEG_BASE.template $MEMSEG_BASE
           arm-none-eabi-size build/*.elf > $MEMSEG_BASE_TMP
           echo -en "\`\`\`\n        " > $MEMSEG_RESULT
           cat $MEMSEG_BASE_TMP | sed -n 1p >> $MEMSEG_RESULT

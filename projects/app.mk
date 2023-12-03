@@ -21,11 +21,14 @@ include $(LIBMCU_ROOT)/projects/interfaces.mk
 SRCS += $(APP_SRCS) \
 	$(LIBMCU_MODULES_SRCS) \
 	$(LIBMCU_INTERFACES_SRCS) \
+	$(LIBMCU_ROOT)/ports/armcm/fault.c \
+	$(LIBMCU_ROOT)/ports/armcm/assert.c \
 
 INCS += $(BASEDIR)/include \
 	$(LIBMCU_MODULES_INCS) \
 	$(LIBMCU_INTERFACES_INCS) \
-	$(PORT_ROOT)
+	$(LIBMCU_ROOT)/ports/armcm/include \
+	$(PORT_ROOT) \
 
 DEFS += $(PROJECT) \
 	BUILD_DATE=$(BUILD_DATE) \
