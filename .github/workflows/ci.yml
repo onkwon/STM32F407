@@ -77,7 +77,7 @@ jobs:
           sed -i 's/-std=gnu17//g' build/compile_commands.json
           CodeChecker analyze ./build/compile_commands.json --enable sensitive \
             --output ./reports --ignore .codechecker.exclude
-          git checkout main $CODECHECKER_BASE || true
+          git checkout main $CODECHECKER_BASE || touch $CODECHECKER_BASE
           CodeChecker parse ./reports -e baseline -o $CODECHECKER_BASE_TMP || true
           CodeChecker cmd diff -b $CODECHECKER_BASE \
             -n ./reports --new > $CODECHECKER_RESULT ||
@@ -103,7 +103,7 @@ jobs:
               body: body
             })
       - name: Store codechecker baseline
-        if: always()
+        if: always() && github.event_name == 'pull_request'
         uses: EndBug/add-and-commit@v9
         with:
           add: '[${{ env.CODECHECKER_BASE }}, ${{ env.MEMSEG_BASE }}]'

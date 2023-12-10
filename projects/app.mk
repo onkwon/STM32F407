@@ -13,8 +13,6 @@ PLATFORM_SPECIFIC := $(PORT_ROOT)/platform.mk
 
 # Third Party
 LIBMCU_ROOT ?= $(BASEDIR)/external/libmcu
-LIBMCU_MODULES := button cli logging metrics
-LIBMCU_INTERFACES := adc i2c l4 uart gpio
 include $(LIBMCU_ROOT)/projects/modules.mk
 include $(LIBMCU_ROOT)/projects/interfaces.mk
 
@@ -28,6 +26,7 @@ INCS += $(BASEDIR)/include \
 	$(LIBMCU_MODULES_INCS) \
 	$(LIBMCU_INTERFACES_INCS) \
 	$(LIBMCU_ROOT)/ports/armcm/include \
+	$(LIBMCU_ROOT)/modules/common/include/libmcu/posix \
 	$(PORT_ROOT) \
 
 DEFS += $(PROJECT) \
