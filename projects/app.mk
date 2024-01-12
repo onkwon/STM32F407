@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
 
 include projects/arch/cm4f.mk
 
@@ -16,18 +16,22 @@ LIBMCU_ROOT ?= $(BASEDIR)/external/libmcu
 include $(LIBMCU_ROOT)/projects/modules.mk
 include $(LIBMCU_ROOT)/projects/interfaces.mk
 
+include ports/rtt/sources.mk
+
 SRCS += $(APP_SRCS) \
 	$(LIBMCU_MODULES_SRCS) \
 	$(LIBMCU_INTERFACES_SRCS) \
 	$(LIBMCU_ROOT)/ports/armcm/fault.c \
 	$(LIBMCU_ROOT)/ports/armcm/assert.c \
+	$(RTT_SRCS) \
 
 INCS += $(BASEDIR)/include \
+	$(PORT_ROOT) \
 	$(LIBMCU_MODULES_INCS) \
 	$(LIBMCU_INTERFACES_INCS) \
 	$(LIBMCU_ROOT)/ports/armcm/include \
 	$(LIBMCU_ROOT)/modules/common/include/libmcu/posix \
-	$(PORT_ROOT) \
+	$(RTT_INCS) \
 
 DEFS += $(PROJECT) \
 	BUILD_DATE=$(BUILD_DATE) \

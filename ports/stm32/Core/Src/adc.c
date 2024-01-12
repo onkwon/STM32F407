@@ -24,12 +24,13 @@
 #include <string.h>
 #include <errno.h>
 
-#include "libmcu/port/adc.h"
+#include "libmcu/adc.h"
 #include "libmcu/metrics.h"
 
 #define VOLTAGE_DIVIDER_RATIO	134 /* R1: 360K, R2: 56K */
 
 struct adc {
+	struct adc_api api;
 	ADC_HandleTypeDef *handle;
 	bool activated;
 };
@@ -154,7 +155,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 }
 
 /* USER CODE BEGIN 1 */
-int adc_port_convert_to_millivolts(struct adc *self, int value)
+static int convert_to_millivolts(struct adc *self, int value)
 {
 	if (!self || !self->activated) {
 		metrics_increase(ADCErrorPipe);
@@ -165,7 +166,7 @@ int adc_port_convert_to_millivolts(struct adc *self, int value)
 	return mv * 1000 / VOLTAGE_DIVIDER_RATIO;
 }
 
-int adc_port_read(struct adc *self, adc_channel_t channel)
+static int read_adc(struct adc *self, adc_channel_t channel)
 {
 	if (!self || !self->activated) {
 		metrics_increase(ADCErrorPipe);
@@ -176,7 +177,7 @@ int adc_port_read(struct adc *self, adc_channel_t channel)
 	return (int)HAL_ADC_GetValue(self->handle);
 }
 
-int adc_port_measure(struct adc *self)
+static int measure_adc(struct adc *self)
 {
 	if (!self || !self->activated) {
 		metrics_increase(ADCErrorPipe);
@@ -189,7 +190,7 @@ int adc_port_measure(struct adc *self)
 	return 0;
 }
 
-int adc_port_channel_init(struct adc *self, adc_channel_t channel)
+static int init_channel(struct adc *self, adc_channel_t channel)
 {
 	if (!self || !self->activated) {
 		metrics_increase(ADCErrorPipe);
@@ -200,7 +201,7 @@ int adc_port_channel_init(struct adc *self, adc_channel_t channel)
 	return 0;
 }
 
-int adc_port_calibrate(struct adc *self)
+static int calibrate(struct adc *self)
 {
 	if (!self || !self->activated) {
 		metrics_increase(ADCErrorPipe);
@@ -216,7 +217,7 @@ int adc_port_calibrate(struct adc *self)
 	return 0;
 }
 
-int adc_port_enable(struct adc *self)
+static int enable_adc(struct adc *self)
 {
 	if (!self) {
 		metrics_increase(ADCErrorPipe);
@@ -232,7 +233,7 @@ int adc_port_enable(struct adc *self)
 	return 0;
 }
 
-int adc_port_disable(struct adc *self)
+static int disable_adc(struct adc *self)
 {
 	if (!self) {
 		metrics_increase(ADCErrorPipe);
@@ -251,7 +252,7 @@ int adc_port_disable(struct adc *self)
 	return 0;
 }
 
-struct adc *adc_port_create(uint8_t adc_num)
+struct adc *adc_create(uint8_t adc_num)
 {
 	static struct adc adc;
 
@@ -261,16 +262,26 @@ struct adc *adc_port_create(uint8_t adc_num)
 
 	adc.handle = &hadc2;
 
+	adc.api = (struct adc_api) {
+		.enable = enable_adc,
+		.disable = disable_adc,
+		.init_channel = init_channel,
+		.calibrate = calibrate,
+		.measure = measure_adc,
+		.read = read_adc,
+		.convert_to_millivolts = convert_to_millivolts,
+	};
+
 	return &adc;
 }
 
-int adc_port_delete(struct adc *self)
+int adc_delete(struct adc *self)
 {
 	if (!self) {
 		metrics_increase(ADCErrorPipe);
 		return -EPIPE;
 	} else if (self->activated) {
-		adc_port_disable(self);
+		adc_disable(self);
 	}
 
 	memset(self, 0, sizeof(*self));

@@ -1,18 +1,22 @@
 /*
- * SPDX-FileCopyrightText: 2023 Kyunghwan Kwon <k@mononn.com>
+ * SPDX-FileCopyrightText: 2023 Kyunghwan Kwon <k@libmcu.org>
  *
- * SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier: MIT
  */
 
-#include "libmcu/port/gpio.h"
-#include "gpio.h"
-#include "pinmap.h"
+#include "libmcu/gpio.h"
+
 #include <errno.h>
 
+#include "gpio.h"
+#include "pinmap.h"
+
 struct gpio {
+	struct gpio_api api;
+
 	uint16_t pin;
-	gpio_handler_t handler;
-	void *handler_ctx;
+	gpio_callback_t callback;
+	void *callback_ctx;
 };
 
 static void enable_gpios(void)
@@ -81,7 +85,7 @@ static uint16_t pin_to_portpin(uint16_t pin)
 	}
 }
 
-int gpio_port_enable(struct gpio *self)
+static int enable_gpio(struct gpio *self)
 {
 	switch (self->pin) {
 	case PINMAP_LED:
@@ -94,13 +98,13 @@ int gpio_port_enable(struct gpio *self)
 	return 0;
 }
 
-int gpio_port_disable(struct gpio *self)
+static int disable_gpio(struct gpio *self)
 {
 	(void)self;
 	return 0;
 }
 
-int gpio_port_set(struct gpio *self, int value)
+static int set_gpio(struct gpio *self, int value)
 {
 	HAL_GPIO_WritePin(pin_to_port(self->pin), pin_to_portpin(self->pin),
 			(GPIO_PinState)value);
@@ -108,21 +112,21 @@ int gpio_port_set(struct gpio *self, int value)
 	return 0;
 }
 
-int gpio_port_get(struct gpio *self)
+static int get_gpio(struct gpio *self)
 {
 	return HAL_GPIO_ReadPin(pin_to_port(self->pin),
 			pin_to_portpin(self->pin));
 }
 
-int gpio_port_register_handler(struct gpio *self,
-		gpio_handler_t handler, void *ctx)
+static int register_callback(struct gpio *self,
+		gpio_callback_t callback, void *ctx)
 {
-	self->handler = handler;
-	self->handler_ctx = ctx;
+	self->callback = callback;
+	self->callback_ctx = ctx;
 	return 0;
 }
 
-struct gpio *gpio_port_create(uint16_t pin)
+struct gpio *gpio_create(uint16_t pin)
 {
 	static struct gpio led;
 
@@ -138,10 +142,18 @@ struct gpio *gpio_port_create(uint16_t pin)
 
 	p->pin = pin;
 
+	p->api = (struct gpio_api) {
+		.enable = enable_gpio,
+		.disable = disable_gpio,
+		.set = set_gpio,
+		.get = get_gpio,
+		.register_callback = register_callback,
+	};
+
 	return p;
 }
 
-void gpio_port_delete(struct gpio *self)
+void gpio_delete(struct gpio *self)
 {
 	(void)self;
 }

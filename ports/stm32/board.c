@@ -1,7 +1,7 @@
 /*
- * SPDX-FileCopyrightText: 2022 Kyunghwan Kwon <k@mononn.com>
+ * SPDX-FileCopyrightText: 2022 Kyunghwan Kwon <k@libmcu.org>
  *
- * SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier: MIT
  */
 
 #include "libmcu/board.h"
@@ -44,6 +44,31 @@ const char *board_get_serial_number_string(void)
 	}
 
 	return sn;
+}
+
+board_reboot_reason_t board_get_reboot_reason(void)
+{
+	board_reboot_reason_t reason = BOARD_REBOOT_UNKNOWN;
+
+	if (__HAL_PWR_GET_FLAG(PWR_FLAG_SB)) {
+		reason = BOARD_REBOOT_DEEPSLEEP;
+	} else if (__HAL_RCC_GET_FLAG(RCC_FLAG_LPWRRST)) {
+		reason = BOARD_REBOOT_POWER;
+	} else if (__HAL_RCC_GET_FLAG(RCC_FLAG_WWDGRST)) {
+		reason = BOARD_REBOOT_WDT;
+	} else if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST)) {
+		reason = BOARD_REBOOT_WDT_INT;
+	} else if (__HAL_RCC_GET_FLAG(RCC_FLAG_SFTRST)) {
+		reason = BOARD_REBOOT_SOFT;
+	} else if (__HAL_RCC_GET_FLAG(RCC_FLAG_PINRST)) {
+		reason = BOARD_REBOOT_PIN;
+	} else if (__HAL_RCC_GET_FLAG(RCC_FLAG_BORRST)) {
+		reason = BOARD_REBOOT_BROWNOUT;
+	}
+
+	__HAL_RCC_CLEAR_RESET_FLAGS();
+
+	return reason;
 }
 
 void board_reboot(void)

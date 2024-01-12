@@ -1,10 +1,10 @@
 /*
  * SPDX-FileCopyrightText: 2022 Kyunghwan Kwon <k@libmcu.org>
  *
- * SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier: MIT
  */
 
-#include "libmcu/port/uart.h"
+#include "libmcu/uart.h"
 
 #include <errno.h>
 #include <string.h>
@@ -15,13 +15,15 @@
 #define MAX_UART			1
 
 struct uart {
+	struct uart_api api;
+
 	UART_HandleTypeDef *handle;
 	uint8_t channel;
 	uint32_t baudrate;
 	bool activated;
 };
 
-int uart_port_write(struct uart *self, const void *data, size_t data_len)
+static int write_uart(struct uart *self, const void *data, size_t data_len)
 {
 	if (!self || !self->activated) {
 		return -EPIPE;
@@ -35,7 +37,7 @@ int uart_port_write(struct uart *self, const void *data, size_t data_len)
 	return (int)data_len;
 }
 
-int uart_port_read(struct uart *self, void *buf, size_t bufsize)
+static int read_uart(struct uart *self, void *buf, size_t bufsize)
 {
 	if (!self || !self->activated) {
 		return -EPIPE;
@@ -50,7 +52,7 @@ int uart_port_read(struct uart *self, void *buf, size_t bufsize)
 	return (int)bufsize;
 }
 
-int uart_port_enable(struct uart *self, uint32_t baudrate)
+static int enable_uart(struct uart *self, uint32_t baudrate)
 {
 	if (!self) {
 		return -EPIPE;
@@ -66,7 +68,7 @@ int uart_port_enable(struct uart *self, uint32_t baudrate)
 	return 0;
 }
 
-int uart_port_disable(struct uart *self)
+static int disable_uart(struct uart *self)
 {
 	if (!self) {
 		return -EPIPE;
@@ -81,7 +83,7 @@ int uart_port_disable(struct uart *self)
 	return 0;
 }
 
-struct uart *uart_port_create(uint8_t channel)
+struct uart *uart_create(uint8_t channel)
 {
 	static struct uart uart[MAX_UART];
 
@@ -92,10 +94,17 @@ struct uart *uart_port_create(uint8_t channel)
 	uart[0].channel = channel;
 	uart[0].handle = &huart2;
 
+	uart[0].api = (struct uart_api) {
+		.enable = enable_uart,
+		.disable = disable_uart,
+		.write = write_uart,
+		.read = read_uart,
+	};
+
 	return &uart[0];
 }
 
-void uart_port_delete(struct uart *self)
+void uart_delete(struct uart *self)
 {
 	memset(self, 0, sizeof(*self));
 }

@@ -1,7 +1,7 @@
 /*
  * SPDX-FileCopyrightText: 2022 Kyunghwan Kwon <k@mononn.com>
  *
- * SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier: MIT
  */
 
 #include "libmcu/cli_overrides.h"

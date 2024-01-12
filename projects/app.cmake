@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
 
 include(${CMAKE_SOURCE_DIR}/projects/arch/cm4f.cmake)
 
@@ -42,6 +42,7 @@ target_link_libraries(${elf_file} PRIVATE
 	-Wl,--Map=\"${CMAKE_BINARY_DIR}/${PROJECT_NAME}.map\"
 
 	stm32
+	rtt
 )
 
 # Third Party
@@ -53,6 +54,9 @@ target_compile_definitions(libmcu PUBLIC
 )
 target_include_directories(libmcu PUBLIC
 	${CMAKE_SOURCE_DIR}/external/libmcu/modules/common/include/libmcu/posix)
+
+add_subdirectory(ports/rtt)
+target_link_libraries(rtt PUBLIC libmcu)
 
 # Platform Specific
 add_subdirectory(${PLATFORM_SPECIFIC})

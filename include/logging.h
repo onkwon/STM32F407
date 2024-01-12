@@ -4,17 +4,19 @@
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef PINMAP_H
-#define PINMAP_H
+#ifndef LOGGING_H
+#define LOGGING_H
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
-#define PINMAP_LED			15
+#include "libmcu/logging.h"
+
+void logging_stdout_backend_init(void);
 
 #if defined(__cplusplus)
 }
 #endif
 
-#endif /* PINMAP_H */
+#endif /* LOGGING_H */

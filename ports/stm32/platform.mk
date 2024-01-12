@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
 
 SDK_ROOT ?= external/STM32CubeG4
 LD_SCRIPT ?= $(PORT_ROOT)/STM32G473CEUx_FLASH.ld

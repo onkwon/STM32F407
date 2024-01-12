@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
 
 include(${CMAKE_SOURCE_DIR}/projects/arch/common.cmake)
 

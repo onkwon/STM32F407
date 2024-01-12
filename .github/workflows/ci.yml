@@ -17,6 +17,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: recursive
+          fetch-depth: 0
       - name: Prepare
         run: |
           git config --system --add safe.directory '*'
@@ -26,9 +27,6 @@ jobs:
           echo "MEMSEG_RESULT=$(echo .github/memsize.txt)" >> $GITHUB_ENV
           echo "MEMSEG_BASE=$(echo .github/memsize.baseline)" >> $GITHUB_ENV
           echo "MEMSEG_BASE_TMP=$(echo .github/memsize_tmp.baseline)" >> $GITHUB_ENV
-      - name: UnitTest
-        run: |
-          echo "Hello" || true
       - name: Build with Make
         run: |
           make
@@ -40,7 +38,6 @@ jobs:
       - name: Process Memory Usage
         continue-on-error: true
         run: |
-          git fetch
           git checkout origin/main -- $MEMSEG_BASE || cp $MEMSEG_BASE.template $MEMSEG_BASE
           arm-none-eabi-size build/*.elf > $MEMSEG_BASE_TMP
           echo -en "\`\`\`\n        " > $MEMSEG_RESULT
@@ -76,17 +73,16 @@ jobs:
           sed -i 's/-fstrict-volatile-bitfields//g' build/compile_commands.json
           sed -i 's/-std=gnu17//g' build/compile_commands.json
           CodeChecker analyze ./build/compile_commands.json --enable sensitive \
-            --output ./reports --ignore .codechecker.exclude
-          git checkout main $CODECHECKER_BASE || touch $CODECHECKER_BASE
+            --ctu --output ./reports --ignore .codechecker.exclude
+          git checkout origin/main $CODECHECKER_BASE || touch $CODECHECKER_BASE
           CodeChecker parse ./reports -e baseline -o $CODECHECKER_BASE_TMP || true
           CodeChecker cmd diff -b $CODECHECKER_BASE \
-            -n ./reports --new > $CODECHECKER_RESULT ||
-            CodeChecker parse reports > $CODECHECKER_RESULT
+            -n ./reports --new > $CODECHECKER_RESULT
       - name: Process Analysis Result
         if: always()
         run: |
           sed -i '1s/^/```\n/' $CODECHECKER_RESULT
-          echo "\n\`\`\`" >> $CODECHECKER_RESULT
+          echo -e "\n\`\`\`" >> $CODECHECKER_RESULT
           cp $CODECHECKER_BASE_TMP $CODECHECKER_BASE
       - name: Comment Static Analysis Result
         if: always() && github.event_name == 'pull_request' && steps.analysis.outcome != 'success'
