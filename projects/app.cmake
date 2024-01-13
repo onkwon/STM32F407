@@ -49,8 +49,7 @@ target_link_libraries(${elf_file} PRIVATE
 add_subdirectory(external/libmcu)
 target_compile_definitions(libmcu PUBLIC
 	METRICS_USER_DEFINES=\"${PROJECT_SOURCE_DIR}/include/metrics.def\"
-	_POSIX_THREADS
-	_POSIX_C_SOURCE=200809L
+	${APP_DEFS}
 )
 target_include_directories(libmcu PUBLIC
 	${CMAKE_SOURCE_DIR}/external/libmcu/modules/common/include/libmcu/posix)

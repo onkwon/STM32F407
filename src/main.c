@@ -11,27 +11,23 @@
 #include "pinmap.h"
 #include "logging.h"
 
-static struct gpio *led;
-
 int main(void)
 {
-	const board_reboot_reason_t reboot_reason = board_get_reboot_reason();
-
 	board_init(); /* should be called very first. */
+
 	logging_init(board_get_time_since_boot_ms);
 	logging_stdout_backend_init();
 
+	const board_reboot_reason_t reboot_reason = board_get_reboot_reason();
 	info("[%s] %s %s", board_get_reboot_reason_string(reboot_reason),
 			board_get_serial_number_string(),
 			board_get_version_string());
 
-	int ledval = 0;
-	led = gpio_create(PINMAP_LED);
+	struct gpio *led = gpio_create(PINMAP_LED);
 	gpio_enable(led);
 
 	while (1) {
-		ledval ^= 1;
-		gpio_set(led, ledval);
+		gpio_set(led, gpio_get(led) ^ 1);
 		sleep_ms(500);
 	}
 
