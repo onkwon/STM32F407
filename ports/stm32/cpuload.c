@@ -11,15 +11,17 @@
 #include "task.h"
 
 #define CPULOAD_CALC_INTERVAL_MS	1000
+#define NR_CORES			1
 
-static uint32_t idle_time_elapsed;
-static uint32_t running_time_elapsed;
-static uint8_t cpuload;
+static struct cpuload {
+	uint32_t idle_time_elapsed;
+	uint32_t running_time_elapsed;
+	TaskHandle_t prev_task;
+	uint8_t cpuload;
+} cores[NR_CORES];
 
 void on_task_switch_in(void)
 {
-	static TaskHandle_t prev;
-
 	static uint32_t t0;
 	static uint32_t sum_elapsed;
 
@@ -34,31 +36,33 @@ void on_task_switch_in(void)
 	}
 
 	TaskHandle_t current = xTaskGetCurrentTaskHandle();
+	struct cpuload *core = &cores[0];
 
 	if (current == xTaskGetIdleTaskHandle()) {
-		if (current == prev) { /* idle to idle */
-			idle_time_elapsed += elapsed;
+		if (current == core->prev_task) { /* idle to idle */
+			core->idle_time_elapsed += elapsed;
 		} else { /* active to idle */
-			running_time_elapsed += elapsed;
+			core->running_time_elapsed += elapsed;
 		}
 	} else {
-		if (current == prev) { /* active to active */
-			running_time_elapsed += elapsed;
+		if (current == core->prev_task) { /* active to active */
+			core->running_time_elapsed += elapsed;
 		} else { /* idle to active */
-			idle_time_elapsed += elapsed;
+			core->idle_time_elapsed += elapsed;
 		}
 	}
 
-	cpuload = (uint8_t)(running_time_elapsed * 100 /
-			(running_time_elapsed + idle_time_elapsed));
+	sum_elapsed += elapsed;
+	core->cpuload = (uint8_t)(core->running_time_elapsed * 100 /
+			(core->running_time_elapsed + core->idle_time_elapsed));
 
-	if ((sum_elapsed += elapsed) >= CPULOAD_CALC_INTERVAL_MS) {
-		running_time_elapsed = idle_time_elapsed = 0;
+	if (sum_elapsed >= CPULOAD_CALC_INTERVAL_MS) {
+		core->running_time_elapsed = core->idle_time_elapsed = 0;
 		sum_elapsed = 0;
 	}
 
 	t0 = t1;
-	prev = current;
+	core->prev_task = current;
 }
 
 void on_sleep_enter(uint32_t tick)
@@ -77,7 +81,7 @@ void on_sleep_exit(uint32_t tick)
 	(void)tick;
 }
 
-uint8_t board_cpuload(void)
+uint8_t board_cpuload(int core_id)
 {
-	return cpuload;
+	return cores[core_id].cpuload;
 }
