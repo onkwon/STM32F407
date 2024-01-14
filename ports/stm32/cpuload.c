@@ -14,6 +14,7 @@
 
 static uint32_t idle_time_elapsed;
 static uint32_t running_time_elapsed;
+static uint8_t cpuload;
 
 void on_task_switch_in(void)
 {
@@ -25,13 +26,20 @@ void on_task_switch_in(void)
 	uint32_t t1 = board_get_time_since_boot_ms();
 	uint32_t elapsed = t1 - t0;
 
+	/* NOTE: count at least 1 even if the task has run for much shorter time
+	 * as millisecond unit timer used here. For fine granularity, introduce
+	 * high-resolution timer. */
+	if (elapsed == 0) {
+		elapsed = 1;
+	}
+
 	TaskHandle_t current = xTaskGetCurrentTaskHandle();
 
 	if (current == xTaskGetIdleTaskHandle()) {
 		if (current == prev) { /* idle to idle */
 			idle_time_elapsed += elapsed;
 		} else { /* active to idle */
-			running_time_elapsed += elapsed? elapsed : 1;
+			running_time_elapsed += elapsed;
 		}
 	} else {
 		if (current == prev) { /* active to active */
@@ -41,9 +49,12 @@ void on_task_switch_in(void)
 		}
 	}
 
+	cpuload = (uint8_t)(running_time_elapsed * 100 /
+			(running_time_elapsed + idle_time_elapsed));
+
 	if ((sum_elapsed += elapsed) >= CPULOAD_CALC_INTERVAL_MS) {
-		sum_elapsed = 0;
 		running_time_elapsed = idle_time_elapsed = 0;
+		sum_elapsed = 0;
 	}
 
 	t0 = t1;
@@ -68,6 +79,5 @@ void on_sleep_exit(uint32_t tick)
 
 uint8_t board_cpuload(void)
 {
-	return (uint8_t)(running_time_elapsed * 100 /
-			(running_time_elapsed + idle_time_elapsed));
+	return cpuload;
 }
