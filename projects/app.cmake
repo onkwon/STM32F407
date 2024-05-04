@@ -28,7 +28,7 @@ set(APP_DEFS
 	_POSIX_C_SOURCE=200809L
 )
 set(TARGET_PLATFORM stm32)
-set(PLATFORM_SPECIFIC ${CMAKE_SOURCE_DIR}/ports/stm32)
+set(PLATFORM_SPECIFIC ${CMAKE_SOURCE_DIR}/ports/${TARGET_PLATFORM})
 set(LD_SCRIPT ${PLATFORM_SPECIFIC}/STM32G473CEUx_FLASH.ld)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -include libmcu/assert.h")
@@ -41,7 +41,7 @@ target_link_libraries(${elf_file} PRIVATE
 	-Wl,--cref
 	-Wl,--Map=\"${CMAKE_BINARY_DIR}/${PROJECT_NAME}.map\"
 
-	stm32
+	${TARGET_PLATFORM}
 	rtt
 )
 
@@ -59,7 +59,7 @@ target_link_libraries(rtt PUBLIC libmcu)
 
 # Platform Specific
 add_subdirectory(${PLATFORM_SPECIFIC})
-target_link_libraries(stm32 PUBLIC libmcu)
+target_link_libraries(${TARGET_PLATFORM} PUBLIC libmcu)
 
 add_custom_target(${PROJECT_NAME}.bin ALL DEPENDS ${elf_file})
 add_custom_target(${PROJECT_NAME}.hex ALL DEPENDS ${elf_file})
