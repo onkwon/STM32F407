@@ -6,8 +6,8 @@
 **
 **  Author		: STM32CubeMX
 **
-**  Abstract    : Linker script for STM32G473CEUx series
-**                512Kbytes FLASH and 128Kbytes RAM
+**  Abstract    : Linker script for STM32F407VETx series
+**                512Kbytes FLASH and 192Kbytes RAM
 **
 **                Set heap size, stack size and stack location according
 **                to application requirements.
@@ -62,6 +62,7 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 MEMORY
 {
 RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 128K
+CCMRAM (xrw)      : ORIGIN = 0x10000000, LENGTH = 64K
 FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 512K
 }
 
@@ -144,6 +145,25 @@ SECTIONS
     . = ALIGN(4);
     _edata = .;        /* define a global symbol at data end */
   } >RAM AT> FLASH
+
+  _siccmram = LOADADDR(.ccmram);
+
+  /* CCM-RAM section 
+  * 
+  * IMPORTANT NOTE! 
+  * If initialized variables will be placed in this section,
+  * the startup code needs to be modified to copy the init-values.  
+  */
+  .ccmram :
+  {
+    . = ALIGN(4);
+    _sccmram = .;       /* create a global symbol at ccmram start */
+    *(.ccmram)
+    *(.ccmram*)
+    
+    . = ALIGN(4);
+    _eccmram = .;       /* create a global symbol at ccmram end */
+  } >CCMRAM AT> FLASH
 
   
   /* Uninitialized data section */

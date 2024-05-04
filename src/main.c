@@ -29,6 +29,7 @@ int main(void)
 	while (1) {
 		gpio_set(led, gpio_get(led) ^ 1);
 		sleep_ms(500);
+		debug("cpuload %u%%", board_cpuload(0));
 	}
 
 	return 0;

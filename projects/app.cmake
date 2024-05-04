@@ -29,7 +29,7 @@ set(APP_DEFS
 )
 set(TARGET_PLATFORM stm32)
 set(PLATFORM_SPECIFIC ${CMAKE_SOURCE_DIR}/ports/${TARGET_PLATFORM})
-set(LD_SCRIPT ${PLATFORM_SPECIFIC}/STM32G473CEUx_FLASH.ld)
+set(LD_SCRIPT ${PLATFORM_SPECIFIC}/STM32F407VETx_FLASH.ld)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -include libmcu/assert.h")
 set(elf_file ${PROJECT_NAME}.elf)
@@ -89,10 +89,10 @@ add_custom_command(TARGET flash
 	COMMAND
 		echo \"r\\nloadbin ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.bin, 0x08000000\\nr\\nq\" > ${PROJECT_NAME}.jlink
 	COMMAND
-		JLinkExe -if swd -device stm32g473ce -speed 4000 -CommanderScript ${PROJECT_NAME}.jlink
+		JLinkExe -if swd -device stm32f407ve -speed 4000 -CommanderScript ${PROJECT_NAME}.jlink
 )
 
 add_custom_command(TARGET gdb
 	USES_TERMINAL COMMAND
-		pyocd gdbserver -t stm32g473ce
+		pyocd gdbserver -t stm32f407ve
 )

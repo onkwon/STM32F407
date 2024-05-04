@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2023 STMicroelectronics.
+  * Copyright (c) 2024 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32g4xx_hal.h"
+#include "stm32f4xx_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -57,14 +57,6 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define BATMON_INT_Pin GPIO_PIN_6
-#define BATMON_INT_GPIO_Port GPIOC
-#define BATMON_INT_EXTI_IRQn EXTI9_5_IRQn
-#define LED_Pin GPIO_PIN_15
-#define LED_GPIO_Port GPIOA
-#define User_button_Pin GPIO_PIN_8
-#define User_button_GPIO_Port GPIOB
-#define User_button_EXTI_IRQn EXTI9_5_IRQn
 
 /* USER CODE BEGIN Private defines */
 
